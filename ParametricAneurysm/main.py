@@ -70,7 +70,6 @@ plt.show()
 
 ########################################
 
-
 y = np.zeros([len(x),1])
 for x0 in unique_x:
 	index = np.where(x[:,0]==x0)[0]
@@ -82,7 +81,7 @@ for x0 in unique_x:
 
 print('shape of x',x.shape)
 print('shape of y',y.shape)
-print('shape of sacle',scale.shape)
+print('shape of scale',scale.shape)
 
 
 
@@ -104,8 +103,9 @@ learning_rate = 1e-3
 path = "Cases/"
 
 #path = pre+"aneurysmsigma01scalepara_100pt-tmp_"+str(ii)
-geo_train.geo_train(device,sigma,scale,mu,xStart,xEnd,L,rInlet,x,y,R,yUp,dP,nu,rho,g,batchsize,learning_rate,epochs,path)
 tic = time.time()
+geo_train.geo_train(device,sigma,scale,mu,xStart,xEnd,L,rInlet,x,y,R,yUp,dP,nu,rho,g,batchsize,learning_rate,epochs,path)
+toc = time.time()
 
 elapseTime = toc - tic
 print ("elapse time in serial = ", elapseTime)

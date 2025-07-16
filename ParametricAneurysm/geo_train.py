@@ -8,12 +8,13 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import pdb
+import pandas as pd
 #from torchvision import datasets, transforms
 import csv
 from torch.utils.data import DataLoader, TensorDataset,RandomSampler
 from math import exp, sqrt,pi
 import time
-def geo_train(device,sigma,scale,mu,xStart,xEnd,L,rInlet,x,y,R,yUp,dP,nu,rho,g,batchsize,learning_rate,epochs,path):
+def geo_train(device,sigma,scale,mu,xStart,xEnd,L,rInlet,x,y,R,yUp,dP,nu,rho,g,batchsize,learning_rate,epochs,path,e_idx=-1):
 	dataset = TensorDataset(torch.Tensor(x),torch.Tensor(y),torch.Tensor(scale))
 	dataloader = DataLoader(dataset, batch_size=batchsize,shuffle=True,num_workers = 0,drop_last = True )
 	h_nD = 30
@@ -150,15 +151,20 @@ def geo_train(device,sigma,scale,mu,xStart,xEnd,L,rInlet,x,y,R,yUp,dP,nu,rho,g,b
 	net3.apply(init_normal)
 	net4.apply(init_normal)
 	############################################################################
-	#continue traning network
-	#net2.load_state_dict(torch.load("stenosis_para"+"_epoch"+str(epochs)+"hard.pt",map_location = 'cpu'))
-	#net2.eval()
-	#net2.load_state_dict(torch.load("stenosis_para"+"_epoch"+str(epochs)+"hard_u.pt",map_location = 'cpu'))
-	#net3.load_state_dict(torch.load("stenosis_para"+"_epoch"+str(epochs)+"hard_v.pt",map_location = 'cpu'))
-	#net4.load_state_dict(torch.load("stenosis_para"+"_epoch"+str(epochs)+"hard_P.pt",map_location = 'cpu'))
-	#net2.eval()
-	#net3.eval()
-	#net4.eval()
+	# continue traning network
+	try:
+		if e_idx >= 0:
+			net2.load_state_dict(torch.load("stenosis_para"+"_epoch"+str(e_idx)+"hard.pt",map_location = 'cpu'))
+			net2.eval()
+			net2.load_state_dict(torch.load("stenosis_para"+"_epoch"+str(e_idx)+"hard_u.pt",map_location = 'cpu'))
+			net3.load_state_dict(torch.load("stenosis_para"+"_epoch"+str(e_idx)+"hard_v.pt",map_location = 'cpu'))
+			net4.load_state_dict(torch.load("stenosis_para"+"_epoch"+str(e_idx)+"hard_P.pt",map_location = 'cpu'))
+			net2.eval()
+			net3.eval()
+			net4.eval()
+	except:
+		print("No previous model found, starting from scratch.")
+		e_idx = -1
 
 	############################################################################
 
@@ -229,18 +235,36 @@ def geo_train(device,sigma,scale,mu,xStart,xEnd,L,rInlet,x,y,R,yUp,dP,nu,rho,g,b
 
 		loss = loss_f(loss_1,torch.zeros_like(loss_1))+ loss_f(loss_2,torch.zeros_like(loss_2))+loss_f(loss_3,torch.zeros_like(loss_3))
 
-		return loss
+		loss_1 = loss_f(loss_1,torch.zeros_like(loss_1))
+		loss_2 = loss_f(loss_2,torch.zeros_like(loss_2))
+		loss_3 = loss_f(loss_3,torch.zeros_like(loss_3))
+
+		return loss, loss_1, loss_2, loss_3
 
 	###################################################################
 
 	# Main loop
-	LOSS = []
+	LOSS = {
+        'epoch': [],
+        'batch': [],
+        'loss': [],
+        'loss_1': [],
+        'loss_2': [],
+        'loss_3': [],
+    }
+
+	LOSS_BY_EPOCH = {
+		'epoch': [],
+		'loss': [],
+		'loss_1': [],
+		'loss_2': [],
+		'loss_3': [],
+	}
+
 	tic = time.time()
 
-	for epoch in range(epochs):
+	for epoch in range(e_idx+1, epochs+1):
 		for batch_idx, (x_in,y_in,scale_in) in enumerate(dataloader):
-
-
 			#zero gradient
 			#net1.zero_grad()
 			##Closure function for LBFGS loop:
@@ -248,7 +272,7 @@ def geo_train(device,sigma,scale,mu,xStart,xEnd,L,rInlet,x,y,R,yUp,dP,nu,rho,g,b
 			net2.zero_grad()
 			net3.zero_grad()
 			net4.zero_grad()
-			loss = criterion(x_in,y_in,scale_in)
+			loss, loss_1, loss_2, loss_3 = criterion(x_in,y_in,scale_in)
 			loss.backward()
 			#return loss
 			#loss = closure()
@@ -260,13 +284,24 @@ def geo_train(device,sigma,scale,mu,xStart,xEnd,L,rInlet,x,y,R,yUp,dP,nu,rho,g,b
 			optimizer4.step()
 			if batch_idx % 100 ==0:
 				print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.10f}'.format(
-					epoch, batch_idx * len(x), len(dataloader.dataset),
+					epoch, batch_idx, len(dataloader),
 					100. * batch_idx / len(dataloader), loss.item()))
-				LOSS.append(loss.item())
-			if epoch %100 == 0:
-				torch.save(net2.state_dict(),path+"geo_para_axisy_sigma"+str(sigma)+"_epoch"+str(epoch)+"hard_u.pt")
-				torch.save(net3.state_dict(),path+"geo_para_axisy_sigma"+str(sigma)+"_epoch"+str(epoch)+"hard_v.pt")
-				torch.save(net4.state_dict(),path+"geo_para_axisy_sigma"+str(sigma)+"_epoch"+str(epoch)+"hard_P.pt")
+				LOSS['epoch'].append(epoch)
+				LOSS['batch'].append(batch_idx)
+				LOSS['loss'].append(loss.item())
+				LOSS['loss_1'].append(loss_1.item())
+				LOSS['loss_2'].append(loss_2.item())
+				LOSS['loss_3'].append(loss_3.item())
+		if epoch in [0, 1, 10, 100, 200, 500]:
+			torch.save(net2.state_dict(),path+"geo_para_axisy_sigma"+str(sigma)+"_epoch"+str(epoch)+"hard_u.pt")
+			torch.save(net3.state_dict(),path+"geo_para_axisy_sigma"+str(sigma)+"_epoch"+str(epoch)+"hard_v.pt")
+			torch.save(net4.state_dict(),path+"geo_para_axisy_sigma"+str(sigma)+"_epoch"+str(epoch)+"hard_P.pt")
+
+		LOSS_BY_EPOCH['epoch'].append(epoch)
+		LOSS_BY_EPOCH['loss'].append(loss.item())
+		LOSS_BY_EPOCH['loss_1'].append(loss_1.item())
+		LOSS_BY_EPOCH['loss_2'].append(loss_2.item())
+		LOSS_BY_EPOCH['loss_3'].append(loss_3.item())
 	toc = time.time()
 	elapseTime = toc - tic
 	print ("elapse time in parallel = ", elapseTime)
@@ -276,8 +311,23 @@ def geo_train(device,sigma,scale,mu,xStart,xEnd,L,rInlet,x,y,R,yUp,dP,nu,rho,g,b
 	#with myFile:
 		#writer = csv.writer(myFile)
 		#writer.writerows(LOSS)
-	LOSS = np.array(LOSS)
-	np.savetxt('Loss_track_pipe_para.csv',LOSS)
+	loss_df = pd.DataFrame(LOSS)
+	loss_df.to_csv('training_losses.csv', index=False)
+
+	# Plot loss curves
+	plt.figure(figsize=(12, 8))
+	plt.plot(LOSS_BY_EPOCH['epoch'], LOSS_BY_EPOCH['loss'], label='Total Loss')
+	plt.plot(LOSS_BY_EPOCH['epoch'], LOSS_BY_EPOCH['loss_1'], label='Loss 1')
+	plt.plot(LOSS_BY_EPOCH['epoch'], LOSS_BY_EPOCH['loss_2'], label='Loss 2')
+	plt.plot(LOSS_BY_EPOCH['epoch'], LOSS_BY_EPOCH['loss_3'], label='Loss 3')
+	plt.xlabel('Epoch')
+	plt.ylabel('Loss')
+	plt.title('Training Loss vs Epoch')
+	plt.legend()
+	plt.yscale('log')  # Use log scale for better visualization
+	plt.grid(True)
+	plt.savefig('loss_curves.png')
+	plt.show()
 
 	############################################################
 

@@ -8,9 +8,8 @@ import single_test
 
 std_type = '3sigma'
 ######## geometry
-Data = np.load('aneurysm_scale0005to002_eval0to002mean001'+std_type+'.npz')
+Data = np.load('ParametricAneurysm/aneurysm_scale0005to002_eval0to002mean001'+std_type+'.npz')
 scale_test = Data['scale']
-
 ################################
 Ns = len(scale_test)
 caseCount  = [1.0,151.0,486.0]
@@ -23,7 +22,7 @@ plot_x= 0.8
 plot_y = 0.06
 fontsize = 14
 axis_limit = [0,1,-0.15,0.15]
-path = 'Cases/'
+path = 'ParametricAneurysm/Cases/'
 for caseIdx in caseCount:
 	## geo_case
 	scale = scale_test[int(caseIdx-1)]
@@ -40,7 +39,7 @@ for caseIdx in caseCount:
 	token1 = "aneurysm0to002"
 
 ######################################################################
-#BELOW SHOULD REAMIN UNCHANGED!!!!
+#BELOW SHOULD REMAIN UNCHANGED!!!!
 ######################################################################	
 
 	print('path is', path+str(caseIdx))
@@ -73,9 +72,9 @@ for caseIdx in caseCount:
 	plt.colorbar()
 	plt.text(plot_x,plot_y,r'CFD',{'color': 'b','fontsize':fontsize})
 	plt.axis(axis_limit)
-	plt.savefig('plot/'+str(int(caseIdx))+'scale'+str(scale)+'uContour_test.png',bbox_inches=  'tight')
+	plt.savefig('ParametricAneurysm/plot/'+str(int(caseIdx))+'scale'+str(scale)+'uContour_test.png',bbox_inches=  'tight')
 
-	print('path is', 'plot/'+str(int(caseIdx))+'scale'+str(scale)+'uContour_test.png')
+	print('path is', 'ParametricAneurysm/plot/'+str(int(caseIdx))+'scale'+str(scale)+'uContour_test.png')
 	
 
 	plt.figure()
@@ -89,7 +88,7 @@ for caseIdx in caseCount:
 	plt.colorbar()
 	plt.text(plot_x,plot_y,r'CFD',{'color': 'b','fontsize':fontsize})
 	plt.axis(axis_limit)
-	plt.savefig('plot/'+str(int(caseIdx))+'scale'+str(scale)+'vContour_test.png',bbox_inches=  'tight')
+	plt.savefig("ParametricAneurysm/" + 'plot/'+str(int(caseIdx))+'scale'+str(scale)+'vContour_test.png',bbox_inches=  'tight')
 
 	
 
@@ -110,7 +109,7 @@ for caseIdx in caseCount:
 	plt.xlabel(r'x', fontsize=16)
 	plt.ylabel(r'$\tau_{c}$', fontsize=16)
 	plt.legend(prop={'size': 16})
-	plt.savefig('plot/'+str(int(caseIdx))+'nu'+str(nu)+'wallShear_test.png',bbox_inches=  'tight')
+	plt.savefig('ParametricAneurysm/plot/'+str(int(caseIdx))+'nu'+str(nu)+'wallShear_test.png',bbox_inches=  'tight')
 	plt.close('all')
 	
 	## show center wall shear
