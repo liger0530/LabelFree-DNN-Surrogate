@@ -196,11 +196,47 @@ def det_test(x,y,nu,dP,mu,sigma,scale,epochs,path1,device,caseIdx):
 	P_hard = (xStart-xt)*0 + dP*(xEnd-xt)/L + 0*yt + (xStart - xt)*(xEnd - xt)*P_t
 	#P_hard = (-4*xt**2+3*xt+1)*dP +(xStart - xt)*(xEnd - xt)*P_t
 
+	rho = 1.0
+
+	u_x = torch.autograd.grad(u_hard,xt,grad_outputs=torch.ones_like(xt),create_graph = True,only_inputs=True)[0]
+	u_xx = torch.autograd.grad(u_x,xt,grad_outputs=torch.ones_like(xt),create_graph = True,only_inputs=True)[0]
+	u_y = torch.autograd.grad(u_hard,yt,grad_outputs=torch.ones_like(yt),create_graph = True,only_inputs=True)[0]
+	u_yy = torch.autograd.grad(u_y,yt,grad_outputs=torch.ones_like(yt),create_graph = True,only_inputs=True)[0]
+	P_x = torch.autograd.grad(P_hard,xt,grad_outputs=torch.ones_like(xt),create_graph = True,only_inputs=True)[0]
+	#P_xx = torch.autograd.grad(P_x,x,grad_outputs=torch.ones_like(x),create_graph = True,only_inputs=True)[0]
+	loss_1 = (u_hard*u_x+v_hard*u_y-nu*(u_xx+u_yy)+1/rho*P_x)
+
+	v_x = torch.autograd.grad(v_hard,xt,grad_outputs=torch.ones_like(yt),create_graph = True,only_inputs=True)[0]
+	v_xx = torch.autograd.grad(v_x,xt,grad_outputs=torch.ones_like(yt),create_graph = True,only_inputs=True)[0]
+	
+	v_y = torch.autograd.grad(v_hard,yt,grad_outputs=torch.ones_like(yt),create_graph = True,only_inputs=True)[0]
+	
+	v_yy = torch.autograd.grad(v_y,yt,grad_outputs=torch.ones_like(yt),create_graph = True,only_inputs=True)[0]
+	P_y = torch.autograd.grad(P_hard,yt,grad_outputs=torch.ones_like(yt),create_graph = True,only_inputs=True)[0]
+	#P_yy = torch.autograd.grad(P_y,y,grad_outputs=torch.ones_like(x),create_graph = True,allow_unused = True)[0]
+
+
+	loss_2 = (u_hard*v_x+v_hard*v_y - nu*(v_xx+v_yy)+1/rho*P_y)
+	#Main_deriv = torch.cat((u_x,u_xx,u_y,u_yy,P_x,v_x,v_xx,v_y,v_yy,P_y),1)
+	loss_3 = (u_x + v_y)
+	#loss_3 = u_x**2 + 2*u_y*v_x + v_y**2+1/rho*(P_xx + P_yy)
+	#loss_3 = loss_3*100
+
 	u_hard = u_hard.cpu().data.numpy()
 	v_hard = v_hard.cpu().data.numpy()
 	P_hard = P_hard.cpu().data.numpy()
+
+	# MSE LOSS
+	loss_f = nn.MSELoss()
+
+	loss = loss_f(loss_1,torch.zeros_like(loss_1))+ loss_f(loss_2,torch.zeros_like(loss_2))+loss_f(loss_3,torch.zeros_like(loss_3))
+
+	loss_1 = loss_f(loss_1,torch.zeros_like(loss_1))
+	loss_2 = loss_f(loss_2,torch.zeros_like(loss_2))
+	loss_3 = loss_f(loss_3,torch.zeros_like(loss_3))
+
 	#path = "/home/luning/OpenFOAM/luning-v1806/run/aneurysmsigma01scale0005_100pt-tmp_"+str(ii)
 	np.savez(path1+str(int(caseIdx))+'ML_WallStress_uvp',x_center = x,y_center = y,u_center = u_hard,v_center = v_hard,p_center = P_hard)
 
-	return u_hard,v_hard,P_hard
+	return u_hard,v_hard,P_hard, loss.item(),loss_1.item(),loss_2.item(),loss_3.item()
 

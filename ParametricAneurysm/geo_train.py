@@ -309,23 +309,23 @@ def geo_train(device,sigma,scale,mu,xStart,xEnd,L,rInlet,x,y,R,yUp,dP,nu,rho,g,b
 	#with myFile:
 		#writer = csv.writer(myFile)
 		#writer.writerows(LOSS)
-	# loss_df = pd.DataFrame(LOSS)
-	# loss_df.to_csv('training_losses.csv', index=False)
+	loss_df = pd.DataFrame(LOSS)
+	loss_df.to_csv('training_losses.csv', index=False)
 
-	# # Plot loss curves
-	# plt.figure(figsize=(12, 8))
-	# plt.plot(LOSS_BY_EPOCH['epoch'], LOSS_BY_EPOCH['loss'], label='Total Loss')
-	# plt.plot(LOSS_BY_EPOCH['epoch'], LOSS_BY_EPOCH['loss_1'], label='Loss 1')
-	# plt.plot(LOSS_BY_EPOCH['epoch'], LOSS_BY_EPOCH['loss_2'], label='Loss 2')
-	# plt.plot(LOSS_BY_EPOCH['epoch'], LOSS_BY_EPOCH['loss_3'], label='Loss 3')
-	# plt.xlabel('Epoch')
-	# plt.ylabel('Loss')
-	# plt.title('Training Loss vs Epoch')
-	# plt.legend()
-	# plt.yscale('log')  # Use log scale for better visualization
-	# plt.grid(True)
-	# plt.savefig('loss_curves.png')
-	# plt.show()
+	# Plot loss curves
+	plt.figure(figsize=(12, 8))
+	plt.plot(LOSS_BY_EPOCH['epoch'], LOSS_BY_EPOCH['loss'], label='Total Loss')
+	plt.plot(LOSS_BY_EPOCH['epoch'], LOSS_BY_EPOCH['loss_1'], label='Loss 1')
+	plt.plot(LOSS_BY_EPOCH['epoch'], LOSS_BY_EPOCH['loss_2'], label='Loss 2')
+	plt.plot(LOSS_BY_EPOCH['epoch'], LOSS_BY_EPOCH['loss_3'], label='Loss 3')
+	plt.xlabel('Epoch')
+	plt.ylabel('Loss')
+	plt.title('Training Loss vs Epoch')
+	plt.legend()
+	plt.yscale('log')  # Use log scale for better visualization
+	plt.grid(True)
+	plt.savefig('loss_curves.png')
+	plt.show()
 
 	############################################################
 
